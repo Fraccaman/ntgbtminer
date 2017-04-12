@@ -126,7 +126,7 @@ def bitcoinaddress2hash160(s):
 #
 # Return the height encoded as per BIP 34
 # See: https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki
-def encode_coinbase_nheight(n, min_size = 1):
+def encode_coinbase_height(n, min_size = 1):
   	s = bytearray(b'\1')
 
   	while n > 127:
@@ -157,7 +157,7 @@ def encode_coinbase_nheight(n, min_size = 1):
 def tx_make_coinbase(coinbase_script, address, value, height):
     # See https://en.bitcoin.it/wiki/Transaction
     
-    coinbase_script = bin2hex(encode_coinbase_nheight(height)) + coinbase_script
+    coinbase_script = bin2hex(encode_coinbase_height(height)) + coinbase_script
 
     # Create a pubkey script
     # OP_DUP OP_HASH160 <len to push> <pubkey> OP_EQUALVERIFY OP_CHECKSIG
@@ -366,7 +366,8 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
 
         # Update the coinbase transaction with the extra nonce
         coinbase_script = coinbase_message + int2lehex(extranonce, 4)
-        coinbase_tx['data'] = tx_make_coinbase(coinbase_script, address, block_template['coinbasevalue'], height)
+
+        coinbase_tx['data'] = tx_make_coinbase(coinbase_script, address, block_template['coinbasevalue'], block_template['height'])
         coinbase_tx['hash'] = tx_compute_hash(coinbase_tx['data'])
 
         # Recompute the merkle root
