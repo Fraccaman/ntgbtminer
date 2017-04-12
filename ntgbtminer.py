@@ -154,10 +154,10 @@ def encode_coinbase_nheight(n, min_size = 1):
 #       value:              (unsigned int) value
 #
 # Returns transaction data in ASCII Hex
-def tx_make_coinbase(coinbase_script, address, value):
+def tx_make_coinbase(coinbase_script, address, value, height):
     # See https://en.bitcoin.it/wiki/Transaction
     
-    coinbase_script = bin2hex(encode_coinbase_nheight(312889)) + coinbase_script
+    coinbase_script = bin2hex(encode_coinbase_nheight(height)) + coinbase_script
 
     # Create a pubkey script
     # OP_DUP OP_HASH160 <len to push> <pubkey> OP_EQUALVERIFY OP_CHECKSIG
@@ -344,7 +344,7 @@ def block_make_submit(block):
 #
 # Returns tuple of (solved block, hashes per second) on finding a solution,
 # or (None, hashes per second) on timeout or nonce exhaustion.
-def block_mine(block_template, coinbase_message, extranonce_start, address, timeout=False, debugnonce_start=False):
+def block_mine(block_template, coinbase_message, extranonce_start, address, timeout=False, debugnonce_start=False, height):
     # Add an empty coinbase transaction to the block template
     coinbase_tx = {}
     block_template['transactions'].insert(0, coinbase_tx)
@@ -366,7 +366,7 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
 
         # Update the coinbase transaction with the extra nonce
         coinbase_script = coinbase_message + int2lehex(extranonce, 4)
-        coinbase_tx['data'] = tx_make_coinbase(coinbase_script, address, block_template['coinbasevalue'])
+        coinbase_tx['data'] = tx_make_coinbase(coinbase_script, address, block_template['coinbasevalue'], height)
         coinbase_tx['hash'] = tx_compute_hash(coinbase_tx['data'])
 
         # Recompute the merkle root
@@ -415,10 +415,10 @@ def block_mine(block_template, coinbase_message, extranonce_start, address, time
 # Standalone Bitcoin Miner, Single-threaded
 ################################################################################
 
-def standalone_miner(coinbase_message, address):
+def standalone_miner(coinbase_message, address, height):
     while True:
         print "Mining new block template..."
-        mined_block, hps = block_mine(rpc_getblocktemplate(), coinbase_message, 0, address, timeout=60)
+        mined_block, hps = block_mine(rpc_getblocktemplate(), coinbase_message, 0, address, timeout=60, height)
         print "Average Mhash/s: %.4f\n" % (hps / 1000000.0)
 
         if mined_block != None:
